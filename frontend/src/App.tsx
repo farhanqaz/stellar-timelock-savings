@@ -6,8 +6,8 @@ import { GoalCard } from "./components/GoalCard.tsx";
 import { Header } from "./components/Header.tsx";
 import { Logo } from "./components/Logo.tsx";
 import { Stagger, StaggerLines, ViewTransition } from "./components/Motion.tsx";
-import { connectFreighter, createContractClient, formatStellarError, NATIVE_TOKEN, xlmToStroops } from "./stellar";
-import { NETWORK_NAME, NETWORK_SLUG, validateEnv } from "./network";
+import { connectFreighter, createContractClient, formatStellarError, getWalletFunds, NATIVE_TOKEN, stroopsToXlm, type WalletFunds, xlmToStroops } from "./stellar";
+import { IS_MAINNET, NETWORK_NAME, NETWORK_SLUG, validateEnv } from "./network";
 import {
   CONTRACT_ID,
   DURATION_PRESETS,
@@ -29,11 +29,20 @@ export default function App() {
   const [now, setNow] = useState(Date.now());
   const [lockMinutes, setLockMinutes] = useState(1440);
   const [customMinutes, setCustomMinutes] = useState(false);
+  const [walletFunds, setWalletFunds] = useState<WalletFunds | null>(null);
 
   const labUrl = getLabUrl(CONTRACT_ID, NETWORK_SLUG);
   const fail = (err: unknown) => setError(formatStellarError(err));
   const stats = getStats(goals);
   const missingEnv = validateEnv();
+
+  const refreshWalletFunds = useCallback(async (address: string) => {
+    try {
+      setWalletFunds(await getWalletFunds(address));
+    } catch {
+      setWalletFunds(null);
+    }
+  }, []);
 
   const loadGoals = useCallback(async () => {
     if (!wallet) return;
@@ -62,12 +71,13 @@ export default function App() {
       }
 
       setGoals(loaded);
+      await refreshWalletFunds(wallet);
     } catch (err) {
       fail(err);
     } finally {
       setLoading(false);
     }
-  }, [wallet]);
+  }, [wallet, refreshWalletFunds]);
 
   useEffect(() => {
     if (wallet) loadGoals();
@@ -98,6 +108,14 @@ export default function App() {
     }
     if (!Number.isInteger(lockMinutes) || lockMinutes < 1) {
       setError("Duration must be at least 1 minute.");
+      return;
+    }
+
+    const lockStroops = xlmToStroops(amountXlm);
+    if (walletFunds && lockStroops > walletFunds.availableStroops) {
+      setError(
+        `Amount exceeds spendable balance (${stroopsToXlm(walletFunds.availableStroops)} XLM available after ~${stroopsToXlm(walletFunds.minimumStroops)} XLM minimum reserve).`,
+      );
       return;
     }
 
@@ -145,7 +163,7 @@ export default function App() {
   return (
     <div className="relative min-h-svh text-zinc-100">
       <BackgroundScene />
-      <Header wallet={wallet} onConnect={handleConnect} onDisconnect={() => { setWallet(""); setGoals([]); }} />
+      <Header wallet={wallet} onConnect={handleConnect} onDisconnect={() => { setWallet(""); setGoals([]); setWalletFunds(null); }} />
 
       {missingEnv.length > 0 && (
         <div className="mx-auto max-w-6xl px-6 pt-6 lg:px-8">
@@ -171,6 +189,7 @@ export default function App() {
           lockMinutes={lockMinutes}
           customMinutes={customMinutes}
           error={error}
+          walletFunds={walletFunds}
           onLockMinutesChange={setLockMinutes}
           onCustomMinutesChange={setCustomMinutes}
           onLock={handleLock}
@@ -283,6 +302,7 @@ type DashboardProps = {
   lockMinutes: number;
   customMinutes: boolean;
   error: string;
+  walletFunds: WalletFunds | null;
   onLockMinutesChange: (v: number) => void;
   onCustomMinutesChange: (v: boolean) => void;
   onLock: (e: FormEvent<HTMLFormElement>) => void;
@@ -299,6 +319,7 @@ function Dashboard({
   lockMinutes,
   customMinutes,
   error,
+  walletFunds,
   onLockMinutesChange,
   onCustomMinutesChange,
   onLock,
@@ -347,6 +368,23 @@ function Dashboard({
             <h3 className="text-sm font-medium text-zinc-300">New vault</h3>
           </div>
           <form className="panel rounded-2xl p-6" onSubmit={onLock}>
+            {walletFunds && (
+              <div className="mb-5 rounded-lg border border-white/6 bg-white/2 px-3 py-2.5 text-xs text-zinc-500">
+                <p>
+                  Wallet balance:{" "}
+                  <span className="tabular-nums text-zinc-300">{stroopsToXlm(walletFunds.balanceStroops)} XLM</span>
+                </p>
+                <p className="mt-1">
+                  Available to lock:{" "}
+                  <span className="tabular-nums text-zinc-300">{stroopsToXlm(walletFunds.availableStroops)} XLM</span>
+                  {IS_MAINNET && walletFunds.availableStroops < 1_000_000n && (
+                    <span className="mt-1 block text-amber-200/80">
+                      Mainnet keeps ~1 XLM minimum reserve. Top up to lock more.
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
             <label className="mb-2 block text-xs uppercase tracking-wider text-zinc-600">Allocation</label>
             <div className="relative mb-6">
               <input
