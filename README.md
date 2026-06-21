@@ -18,6 +18,14 @@ Unlike the workshop's claimable-balance timelock example (where *other* accounts
 - **Read-only queries** — check goal details, count, and unlock status
 - **On-chain events** — emits `locked` and `withdraw` events for indexing
 
+## Smart Contract (Mainnet)
+
+| Field | Value |
+|-------|-------|
+| **Contract ID** | `CBBAMKDRCAXZOLG4MWWSUN5VQVSOHDEVOBR2XYJIXKUUZT32JC5JMJ55` |
+| **Network** | Stellar Mainnet |
+| **Explorer** | [View on Stellar Lab](https://lab.stellar.org/r/mainnet/contract/CBBAMKDRCAXZOLG4MWWSUN5VQVSOHDEVOBR2XYJIXKUUZT32JC5JMJ55) |
+
 ## Smart Contract (Testnet)
 
 | Field | Value |
@@ -90,9 +98,30 @@ stellar contract invoke \
   --goal_id 0
 ```
 
+## How to Invoke (Mainnet)
+
+```bash
+TOKEN=CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
+CONTRACT=CBBAMKDRCAXZOLG4MWWSUN5VQVSOHDEVOBR2XYJIXKUUZT32JC5JMJ55
+
+# Lock 0.1 XLM until a future timestamp (unix seconds)
+stellar contract invoke \
+  --id $CONTRACT \
+  --source <your-key> \
+  --network mainnet \
+  --send=yes \
+  -- lock \
+  --saver $(stellar keys address <your-key>) \
+  --token $TOKEN \
+  --amount 1000000 \
+  --unlock_at 1782000000
+```
+
+> Use real XLM on mainnet. Start with a small amount for testing.
+
 ## Frontend (React + Vite)
 
-Premium web UI for locking and withdrawing savings via Freighter wallet on testnet.
+Premium web UI for locking and withdrawing savings via Freighter wallet.
 
 ```bash
 cd frontend
@@ -101,7 +130,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL (default `http://localhost:5173`), connect Freighter on **Testnet**, then create a savings vault or withdraw matured positions.
+Open the local URL (default `http://localhost:5173`), connect Freighter on **Mainnet**, then create a savings vault or withdraw matured positions.
 
 | Feature | Description |
 |---------|-------------|
