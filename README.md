@@ -132,12 +132,76 @@ npm run dev
 
 Open the local URL (default `http://localhost:5173`), connect Freighter on **Mainnet**, then create a savings vault or withdraw matured positions.
 
+> **Account not found?** Your wallet must be funded on the same network as `.env`. Mainnet needs real XLM; Testnet needs faucet funds. Freighter network must match `.env`.
+
 | Feature | Description |
 |---------|-------------|
 | **Wallet** | Freighter connect / disconnect |
 | **Lock** | Deposit XLM with preset or custom unlock duration |
 | **Dashboard** | Live stats, countdown, progress per goal |
 | **Withdraw** | Release matured vaults on-chain |
+
+## Deploy to Vercel
+
+### 1. Import from GitHub
+
+1. Open [vercel.com/new](https://vercel.com/new)
+2. Import `farhanqaz/stellar-timelock-savings`
+3. Set **Root Directory** to `frontend` (required)
+
+### 2. Build settings
+
+| Setting | Value |
+|---------|-------|
+| Framework | Vite |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Install Command | `npm install` |
+
+### 3. Environment variables (Production)
+
+| Variable | Mainnet value |
+|----------|---------------|
+| `VITE_STELLAR_NETWORK_PASSPHRASE` | `Public Global Stellar Network ; September 2015` |
+| `VITE_STELLAR_RPC_URL` | `https://soroban-mainnet.stellar.org` |
+| `VITE_STELLAR_CONTRACT_ID` | `CBBAMKDRCAXZOLG4MWWSUN5VQVSOHDEVOBR2XYJIXKUUZT32JC5JMJ55` |
+| `VITE_STELLAR_NATIVE_TOKEN` | `CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA` |
+
+For **Testnet demo**, use the commented values in `frontend/.env.example` instead.
+
+### 4. Deploy
+
+Click **Deploy**. After build succeeds, open the production URL.
+
+### 5. Verify
+
+- Header badge shows **Stellar Mainnet** (amber) or **Testnet** (gray)
+- Freighter network matches the deployed env
+- Connect wallet → dashboard loads without errors
+
+### CLI alternative
+
+```bash
+cd frontend
+npx vercel login
+npx vercel link
+npx vercel env add VITE_STELLAR_NETWORK_PASSPHRASE production
+npx vercel env add VITE_STELLAR_RPC_URL production
+npx vercel env add VITE_STELLAR_CONTRACT_ID production
+npx vercel env add VITE_STELLAR_NATIVE_TOKEN production
+npx vercel deploy --prod
+```
+
+Deploy from the `frontend/` folder only. If Vercel shows a `frontend/frontend` path error, set **Root Directory** to `frontend` in Project Settings.
+
+## Troubleshooting
+
+| Error | Fix |
+|-------|-----|
+| `Account not found` | Fund wallet on the same network as `.env` / Vercel env vars |
+| `Freighter is on Testnet but this app uses Mainnet` | Freighter Settings → switch to Mainnet |
+| Build OK but contract fails | Redeploy after adding all four `VITE_*` env vars |
+| Vite `export *` warning | Harmless; already removed from bindings re-exports |
 
 ## Project Structure
 

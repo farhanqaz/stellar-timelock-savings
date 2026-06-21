@@ -6,12 +6,13 @@ import { GoalCard } from "./components/GoalCard.tsx";
 import { Header } from "./components/Header.tsx";
 import { Logo } from "./components/Logo.tsx";
 import { Stagger, StaggerLines, ViewTransition } from "./components/Motion.tsx";
-import { connectFreighter, createContractClient, NATIVE_TOKEN, xlmToStroops } from "./stellar";
+import { connectFreighter, createContractClient, formatStellarError, NATIVE_TOKEN, xlmToStroops } from "./stellar";
+import { NETWORK_NAME, NETWORK_SLUG, validateEnv } from "./network";
 import {
   CONTRACT_ID,
   DURATION_PRESETS,
+  getLabUrl,
   getStats,
-  LAB_URL,
   truncateAddress,
   type GoalView,
   writeLockedAt,
@@ -29,8 +30,10 @@ export default function App() {
   const [lockMinutes, setLockMinutes] = useState(1440);
   const [customMinutes, setCustomMinutes] = useState(false);
 
-  const fail = (err: unknown) => setError(err instanceof Error ? err.message : "Something went wrong");
+  const labUrl = getLabUrl(CONTRACT_ID, NETWORK_SLUG);
+  const fail = (err: unknown) => setError(formatStellarError(err));
   const stats = getStats(goals);
+  const missingEnv = validateEnv();
 
   const loadGoals = useCallback(async () => {
     if (!wallet) return;
@@ -144,9 +147,18 @@ export default function App() {
       <BackgroundScene />
       <Header wallet={wallet} onConnect={handleConnect} onDisconnect={() => { setWallet(""); setGoals([]); }} />
 
+      {missingEnv.length > 0 && (
+        <div className="mx-auto max-w-6xl px-6 pt-6 lg:px-8">
+          <p className="error-enter rounded-lg border border-amber-500/20 bg-amber-500/8 px-4 py-3 text-sm text-amber-100/90">
+            Missing env vars: {missingEnv.join(", ")}. Copy <code className="font-mono text-xs">.env.example</code> to{" "}
+            <code className="font-mono text-xs">.env</code> and restart the dev server.
+          </p>
+        </div>
+      )}
+
       {!wallet ? (
         <ViewTransition viewKey="landing">
-          <Landing onConnect={handleConnect} />
+          <Landing onConnect={handleConnect} labUrl={labUrl} />
         </ViewTransition>
       ) : (
         <ViewTransition viewKey="dashboard">
@@ -173,7 +185,7 @@ export default function App() {
   );
 }
 
-function Landing({ onConnect }: { onConnect: () => void }) {
+function Landing({ onConnect, labUrl }: { onConnect: () => void; labUrl: string }) {
   return (
     <main className="mx-auto max-w-6xl px-6 pb-24 pt-20 lg:px-8 lg:pt-28">
       <section className="mx-auto max-w-3xl text-center">
@@ -207,7 +219,7 @@ function Landing({ onConnect }: { onConnect: () => void }) {
             Open application
           </button>
           <a
-            href={LAB_URL}
+            href={labUrl}
             target="_blank"
             rel="noreferrer"
             className="btn-ghost rounded-lg border border-white/8 px-6 py-3 text-sm text-zinc-400 hover:border-white/14 hover:text-zinc-200">
@@ -242,7 +254,7 @@ function Landing({ onConnect }: { onConnect: () => void }) {
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-600">Network metrics</p>
-            <p className="font-display mt-3 text-3xl text-zinc-100">Testnet deployment</p>
+            <p className="font-display mt-3 text-3xl text-zinc-100">Stellar {NETWORK_NAME}</p>
           </div>
           <dl className="grid grid-cols-2 gap-8 sm:grid-cols-3">
             {[
@@ -463,7 +475,7 @@ function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-center sm:flex-row sm:text-left lg:px-8">
         <Logo size={28} />
         <div>
-          <p className="text-xs text-zinc-600">Timelock Savings · Soroban smart contract · Stellar Testnet</p>
+          <p className="text-xs text-zinc-600">Timelock Savings · Soroban smart contract · Stellar {NETWORK_NAME}</p>
           <p className="mt-1 font-mono text-[10px] text-zinc-700">{CONTRACT_ID}</p>
         </div>
       </div>

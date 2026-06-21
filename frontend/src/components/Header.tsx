@@ -1,3 +1,4 @@
+import { NETWORK_BADGE_CLASS, NETWORK_NAME } from "../network";
 import { Logo } from "./Logo.tsx";
 
 type HeaderProps = {
@@ -13,8 +14,8 @@ export function Header({ wallet, onConnect, onDisconnect }: HeaderProps) {
         <Logo size={34} />
 
         <div className="flex items-center gap-3">
-          <span className="hidden rounded-full border border-white/6 bg-white/3 px-3 py-1 text-[11px] font-medium tracking-wide text-zinc-500 sm:inline">
-            Stellar Testnet
+          <span className={`hidden rounded-full border px-3 py-1 text-[11px] font-medium tracking-wide sm:inline ${NETWORK_BADGE_CLASS}`}>
+            Stellar {NETWORK_NAME}
           </span>
           {wallet ? (
             <button

@@ -76,4 +76,7 @@ export const DURATION_PRESETS = [
 ] as const;
 
 export const CONTRACT_ID = import.meta.env.VITE_STELLAR_CONTRACT_ID ?? "";
-export const LAB_URL = `https://lab.stellar.org/r/testnet/contract/${CONTRACT_ID}`;
+
+export function getLabUrl(contractId: string, networkSlug: string) {
+  return `https://lab.stellar.org/r/${networkSlug}/contract/${contractId}`;
+}
