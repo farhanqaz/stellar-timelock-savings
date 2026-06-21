@@ -90,6 +90,26 @@ stellar contract invoke \
   --goal_id 0
 ```
 
+## Frontend (React + Vite)
+
+Premium web UI for locking and withdrawing savings via Freighter wallet on testnet.
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open the local URL (default `http://localhost:5173`), connect Freighter on **Testnet**, then create a savings vault or withdraw matured positions.
+
+| Feature | Description |
+|---------|-------------|
+| **Wallet** | Freighter connect / disconnect |
+| **Lock** | Deposit XLM with preset or custom unlock duration |
+| **Dashboard** | Live stats, countdown, progress per goal |
+| **Withdraw** | Release matured vaults on-chain |
+
 ## Project Structure
 
 ```text
@@ -100,6 +120,10 @@ stellar contract invoke \
 │       │   ├── lib.rs      # Contract logic
 │       │   └── test.rs     # Unit tests
 │       └── Cargo.toml
+├── frontend/
+│   ├── src/                # React app (Freighter + contract client)
+│   ├── bindings/           # TypeScript bindings from Stellar CLI
+│   └── public/
 ├── Cargo.toml
 └── README.md
 ```
@@ -108,6 +132,8 @@ stellar contract invoke \
 
 - Rust + Soroban SDK 26
 - Stellar CLI 27
+- React 19 + Vite + Tailwind CSS 4
+- Freighter wallet + `@stellar/stellar-sdk`
 - Developed with AI assistance (Cursor)
 
 ## Workshop Submission
